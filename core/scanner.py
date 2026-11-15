@@ -4,8 +4,8 @@ import hashlib
 import threading
 import time
 import subprocess
-from collections import Counter
 from pathlib import Path
+from collections import Counter
 
 class ScanEngine:
     def __init__(self, progress_cb=None, found_cb=None, done_cb=None):
@@ -29,22 +29,21 @@ class ScanEngine:
     def _calc_entropy(self, data: bytes) -> float:
         if not data:
             return 0.0
-        entropy = 0.0
         counts = Counter(data)
+        entropy = 0.0
         length = len(data)
         for count in counts.values():
             p_x = count / length
-            entropy += - p_x * math.log2(p_x)
+            entropy -= p_x * math.log2(p_x)
         return entropy
 
-    def _check_signature(self, file_path: Path) -> bool:
-        """Проверяет цифровую подпись файла (только Windows)"""
-        if os.name != "nt":
-            return False
+    def _check_signature(self, path: Path) -> bool:
+        # Проверка цифровой подписи через PowerShell (медленно, но надежно для exe)
         try:
-            cmd = f'powershell -NoProfile -Command "(Get-AuthenticodeSignature \'{file_path}\').Status"'
-            out = subprocess.check_output(cmd, shell=True, timeout=5, creationflags=0x08000000).decode(errors="ignore").strip()
-            return out == "Valid"
+            ps = f"(Get-AuthenticodeSignature '{path}').Status"
+            cmd = ["powershell", "-NoProfile", "-Command", ps]
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=3, creationflags=0x08000000 if os.name == "nt" else 0)
+            return "Valid" in out.stdout
         except Exception:
             return False
 
@@ -59,6 +58,7 @@ class ScanEngine:
                 
             is_pe = chunk.startswith(b"MZ")
             entropy = self._calc_entropy(chunk)
+            
             dangerous_exts = {".exe", ".dll", ".bat", ".cmd", ".vbs", ".ps1", ".scr"}
             is_dangerous_ext = file_path.suffix.lower() in dangerous_exts
             
@@ -69,21 +69,23 @@ class ScanEngine:
             file_hash = hasher.hexdigest()
             
             reasons = []
+            severity = "Низкая"
             
-            # Эвристика энтропии для PE файлов
             if is_pe and entropy > 7.2:
-                # Игнорируем, если файл имеет валидную цифровую подпись (это скорее всего установщик)
+                # Если высокая энтропия, проверяем подпись (чтобы не трогать установщики)
                 if not self._check_signature(file_path):
-                    reasons.append("Высокая энтропия PE (возможная упаковка/шифрование)")
+                    reasons.append("Высокая энтропия PE (упакован и без подписи)")
+                    severity = "Высокая"
                     
             if is_dangerous_ext and size < 1024:
-                reasons.append("Подозрительно маленький размер исполняемого файла")
+                reasons.append("Подозрительно маленький исполняемый файл")
+                severity = "Средняя"
             
             if reasons:
                 return {
                     "path": str(file_path),
                     "name": file_path.name,
-                    "severity": "Высокая" if "энтропия" in reasons[0] else "Средняя",
+                    "severity": severity,
                     "type": "Эвристика",
                     "reason": " | ".join(reasons),
                     "hash": file_hash,
@@ -101,12 +103,12 @@ class ScanEngine:
             files = [p]
         elif p.is_dir():
             for root, _, fs in os.walk(p):
+                if len(files) > 10000:
+                    break
                 for f in fs:
                     files.append(Path(root) / f)
                     if len(files) >= 10000:
                         break
-                if len(files) >= 10000:
-                    break
         
         total = max(len(files), 1)
         found = []
