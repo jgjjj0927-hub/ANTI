@@ -1,0 +1,106 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #0a0a0a;
+    color: white;
+    line-height: 1.6;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.badge {
+    background-color: #0a2a0a;
+    color: #00ff41;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #00ff41;
+}
+
+.hero {
+    padding: 80px 50px;
+    text-align: left;
+}
+
+.hero h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    color: #888;
+    font-size: 18px;
+}
+
+.content {
+    padding: 50px;
+    max-width: 800px;
+}
+
+.content h2 {
+    margin: 30px 0 15px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 10px;
+}
+
+.content ul {
+    list-style-position: inside;
+    color: #ccc;
+}
+
+.content ul li {
+    margin-bottom: 10px;
+}
+
+a {
+    color: #00ff41;
+    text-decoration: none;
+}
+
+.tariff-card {
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #222;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tariff-card h3 {
+    font-size: 20px;
+}
+
+.tariff-card span {
+    color: #00ff41;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #555;
+    border-top: 1px solid #1a1a1a;
+    margin-top: 50px;
+}
